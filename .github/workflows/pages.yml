@@ -57,6 +57,10 @@ jobs:
       # a golden image. puppeteer-core is a test tool only; the site uses nothing from npm.
       - name: Browser check
         run: |
+          # emsdk puts its own Node first on the path, and for this Emscripten that is
+          # Node 14. puppeteer needs 18 or later, so use the runner's Node here.
+          PATH="$(printf '%s' "$PATH" | tr ':' '\n' | grep -vxF "$(dirname "$EMSDK_NODE")" | paste -sd: -)"
+          echo "node $(node --version)"
           npm install --no-save --no-audit --no-fund puppeteer-core@23
           CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)" \
             node tests/browser/check.mjs build/web
