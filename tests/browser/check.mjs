@@ -108,6 +108,22 @@ try {
   check(first.join(",") === "index.html,style.css,theme.js,config.js,app.js", "first load fetches the page only, not the editor: " + first.join(", "));
   check(await page.$eval("#start", (e) => !e.hidden && /never|not uploaded/.test(e.textContent)), "the start screen says the photo is not uploaded");
 
+  // ---- addresses: only the build's config.js names any, and the footer uses those ----
+  const named = [];
+  for (const f of ["index.html", "style.css", "theme.js", "app.js"]) {
+    const m = (await readFile(path.join(root, f), "utf8")).match(/https?:\/\/[^\s"'<>)]*/gi);
+    if (m) named.push(`${f}: ${m.join(" ")}`);
+  }
+  check(named.length === 0, "the page's own files name no address" + (named.length ? ": " + named.join("; ") : ""));
+  const links = await page.evaluate(() => [["source", window.CROPMARK_SOURCE], ["author", window.CROPMARK_AUTHOR]].map(([id, url]) => {
+    const a = document.getElementById(id);
+    return { id, url, hidden: a.hidden, href: a.getAttribute("href") };
+  }));
+  const wrong = links.filter((l) => (l.url ? l.hidden || l.href !== l.url : !l.hidden));
+  check(wrong.length === 0, "the footer links are the build's addresses: " +
+    links.map((l) => `${l.id} ${l.url ? l.url : "(none, hidden)"}`).join(", ") +
+    (wrong.length ? "; wrong: " + wrong.map((l) => l.id).join(", ") : ""));
+
   const view = () => page.evaluate(() => { const m = window.__ed; return [0, 1, 2, 3, 4, 5, 6].map((k) => m._cm_web_view(k)); });
   const box = () => page.$eval("#canvas", (c) => { const r = c.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height, bw: c.width, bh: c.height }; });
   // The mouse position (page pixels) for an image point, and the image point the

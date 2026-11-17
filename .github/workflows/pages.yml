@@ -41,10 +41,16 @@ jobs:
       - name: Core tests as WebAssembly
         run: make test
 
-      # The source link on the page is this repository's address, passed in here so
-      # that no address is written into the source.
+      # The footer links are passed in here, so that no address is written into the
+      # source. "Source" is this repository. The author's name links to the Code page of
+      # the owner's site; a repository variable AUTHOR_URL (Settings -> Secrets and
+      # variables -> Actions -> Variables) replaces that, for example after the owner's
+      # site moves to its own domain.
       - name: Build the site
-        run: make web REPO_URL="${{ github.server_url }}/${{ github.repository }}"
+        env:
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+          AUTHOR_URL: ${{ vars.AUTHOR_URL || format('https://{0}.github.io/code/', github.repository_owner) }}
+        run: make web REPO_URL="$REPO_URL" AUTHOR_URL="$AUTHOR_URL"
 
       - name: The site stays under 10 MB
         run: |
