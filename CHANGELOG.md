@@ -3,6 +3,19 @@
 The web version of cropmark is **pre-1.0**. Until 1.0 there is no compatibility
 promise: any release may change the page and what it remembers in the browser.
 
+## Unreleased
+
+- The author link in the footer no longer has an address written into the page. Like
+  the "Source" link, it comes from the build (`AUTHOR_URL`); the workflow points it at
+  the owner's Code page, and a repository variable `AUTHOR_URL` can replace that. A
+  link without an address is hidden, and only `http` and `https` addresses are used.
+- The browser check also tests that the page's own files name no address and that the
+  footer links are the build's (31 checks).
+- `core/` now points at the desktop repository's `main` (`e45ac0e`, the merge of its
+  `web-support` branch). The files are the same as before.
+- The site stays at GitHub's default address. The README no longer describes a
+  planned is-a.dev subdomain; it notes what to do if a custom domain is added later.
+
 ## 0.1.0 (2026-11-16)
 
 - cropmark's desktop editor, compiled to WebAssembly, on a page: open a photo with the

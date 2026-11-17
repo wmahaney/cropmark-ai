@@ -246,10 +246,13 @@
     if (editor && editor._cm_web_modified()) { ev.preventDefault(); ev.returnValue = ""; }
   });
 
-  // The link to the source, if the build was given one (see config.js).
-  if (window.CROPMARK_SOURCE) {
-    $("source").href = window.CROPMARK_SOURCE;
-    $("source").hidden = false;
+  // The footer links, for the addresses the build was given (see config.js). Only
+  // http and https addresses are used; a link without one stays hidden.
+  for (const [id, url] of [["source", window.CROPMARK_SOURCE], ["author", window.CROPMARK_AUTHOR]]) {
+    if (typeof url === "string" && /^https?:\/\//.test(url)) {
+      $(id).href = url;
+      $(id).hidden = false;
+    }
   }
   showTheme();
 })();

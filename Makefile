@@ -16,9 +16,11 @@ B     := build
 CORE  := core
 PORT  ?= 8000
 
-# Where the page's "Source" link points. It is not written into the source: the
-# workflow passes the repository's address, and a local build has no link.
+# Where the page's two footer links point: "Source" (REPO_URL) and the author's name
+# (AUTHOR_URL). Neither address is written into the source: the workflow passes them,
+# and a local build has neither link.
 REPO_URL ?=
+AUTHOR_URL ?=
 
 # The web limit on image size: 32 megapixels (the desktop limit is 128).
 MAX_PIXELS := '(32u * 1024u * 1024u)'
@@ -68,8 +70,12 @@ $(B)/web/%: web/% | $(B)/web
 $(B)/web/font/DejaVuSans.ttf: third_party/dejavu/DejaVuSans.ttf | $(B)/web
 	cp $< $@
 
+# The addresses go into a JavaScript string, so refuse the characters that could end it.
+CHECK_ADDR = $(if $(findstring ",$(1))$(findstring \,$(1))$(findstring <,$(1)),$(error $(2) must not contain ", \ or <))
 $(B)/web/config.js: Makefile FORCE | $(B)/web
-	@printf '// Written by the build. The address of the source, or "" for none.\nwindow.CROPMARK_SOURCE = "%s";\n' "$(REPO_URL)" > $@.tmp
+	$(call CHECK_ADDR,$(REPO_URL),REPO_URL)
+	$(call CHECK_ADDR,$(AUTHOR_URL),AUTHOR_URL)
+	@printf '// Written by the build. Addresses for the footer links, or "" for none.\nwindow.CROPMARK_SOURCE = "%s";\nwindow.CROPMARK_AUTHOR = "%s";\n' "$(REPO_URL)" "$(AUTHOR_URL)" > $@.tmp
 	@cmp -s $@.tmp $@ || mv $@.tmp $@; rm -f $@.tmp
 
 $(B)/web/THIRD_PARTY.txt: third_party/NOTICE.txt third_party/dejavu/LICENSE.txt | $(B)/web
