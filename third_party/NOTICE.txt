@@ -1,0 +1,21 @@
+The web version of cropmark includes the following third-party software. Each keeps
+its own license.
+
+DejaVu Sans 2.37 (the font used for text and for the editor's labels)
+  Copyright (c) 2003 Bitstream, Inc.; DejaVu changes are in the public domain
+  Bitstream Vera license (full text below)
+  File: third_party/dejavu/DejaVuSans.ttf
+
+stb_image, stb_image_write, stb_truetype (image decoding and encoding, font rendering)
+  by Sean Barrett and contributors; public domain / MIT
+  Files: core/third_party/ (part of the core repository)
+
+SDL 2 (window, input and drawing), compiled in by Emscripten
+  Copyright (C) 1997-2022 Sam Lantinga; zlib license
+  https://www.libsdl.org
+
+Emscripten runtime (the JavaScript that loads the WebAssembly module)
+  Copyright (c) Emscripten authors; MIT / University of Illinois-NCSA
+  https://emscripten.org
+
+cropmark itself is dedicated to the public domain under CC0 1.0 (see LICENSE).

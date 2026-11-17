@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Everything comes from this site, and the page can contact no other.
+     See docs/ARCHITECTURE.md, "Security". -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'; img-src 'self' blob: data:; style-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="Crop a photo and mark it up in your browser. The photo never leaves the tab.">
+<title>cropmark</title>
+<!-- An empty icon, so the browser does not ask the server for /favicon.ico. -->
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+<script src="theme.js"></script>
+<script src="config.js"></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+
+<header class="toolbar">
+  <span class="brand">cropmark</span>
+  <button type="button" id="btn-open" class="primary" title="Open a photo from this computer (Ctrl+O)">Open</button>
+  <label class="field" title="The format Save writes">Save as
+    <select id="format">
+      <option value="png">PNG</option>
+      <option value="jpeg">JPEG</option>
+    </select>
+  </label>
+  <button type="button" id="btn-keys" aria-expanded="false" aria-controls="keys">Shortcuts</button>
+  <span class="privacy">Your photo never leaves this tab.</span>
+  <span class="grow"></span>
+  <button type="button" id="btn-theme" title="Switch between light and dark">Dark</button>
+  <input type="file" id="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" hidden>
+</header>
+
+<p id="message" class="message" role="alert" hidden></p>
+
+<main id="main">
+  <section id="start" class="start">
+    <h1>Crop a photo and mark it up</h1>
+    <p class="lead">Drop a JPEG or PNG here, paste one, or press <strong>Open</strong>.</p>
+    <p>The photo is opened, edited and saved inside this tab. It is not uploaded anywhere.</p>
+    <p>A saved file keeps the colour profile and is turned upright. Other EXIF data, including the GPS location, is removed.</p>
+  </section>
+
+  <div id="stage" class="stage" hidden>
+    <canvas id="canvas" tabindex="0" aria-label="The photo editor. Open the Shortcuts list for its keys."></canvas>
+  </div>
+
+  <aside id="keys" class="keys" hidden>
+    <h2>Shortcuts</h2>
+    <p>Click the photo first, so the editor has the keyboard.</p>
+    <dl>
+      <dt>M H A B E C T</dt><dd>Marker, Highlight, Arrow, Box, Ellipse, Crop, Text</dd>
+      <dt>1 to 8</dt><dd>Colour</dd>
+      <dt>[ and ]</dt><dd>Thinner, thicker (smaller, larger text)</dd>
+      <dt>O</dt><dd>Outline for text</dd>
+      <dt>Enter</dt><dd>Apply the crop; finish the text</dd>
+      <dt>Shift+Enter</dt><dd>New line in text</dd>
+      <dt>Esc</dt><dd>Cancel what is in progress</dd>
+      <dt>Ctrl+Z, Ctrl+Y</dt><dd>Undo, redo</dd>
+      <dt>Ctrl+S</dt><dd>Save: download the result</dd>
+      <dt>Ctrl+Shift+S</dt><dd>Save under another name</dd>
+      <dt>Ctrl+O</dt><dd>Open another photo</dd>
+      <dt>Mouse wheel</dt><dd>Zoom around the pointer</dd>
+      <dt>Space+drag</dt><dd>Move the photo (or drag with the middle button)</dd>
+      <dt>0</dt><dd>Fit the photo to the window</dd>
+    </dl>
+  </aside>
+</main>
+
+<footer class="status">
+  <span>JPEG and PNG, up to 32 megapixels. GPS and other EXIF data are removed on save.</span>
+  <span class="grow"></span>
+  <a id="source" hidden rel="noopener">Source</a>
+  <a href="THIRD_PARTY.txt">Licenses</a>
+  <a href="https://wmahaney.github.io/code/" rel="noopener">William Mahaney</a>
+</footer>
+
+</body>
+</html>
