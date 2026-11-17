@@ -13,9 +13,8 @@ promise: any release may change the page and what it remembers in the browser.
   footer links are the build's (31 checks).
 - `core/` now points at the desktop repository's `main` (`e45ac0e`, the merge of its
   `web-support` branch). The files are the same as before.
-- README: the custom-domain section covers a domain for the whole site, a subdomain of
-  your own domain for this tool alone, and is-a.dev, each with the order that prevents
-  a takeover.
+- The site stays at GitHub's default address. The README no longer describes a
+  planned is-a.dev subdomain; it notes what to do if a custom domain is added later.
 
 ## 0.1.0 (2026-11-16)
 
