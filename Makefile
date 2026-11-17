@@ -41,7 +41,7 @@ $(CORE)/include/pmark.h:
 # Single-threaded WebAssembly (GitHub Pages cannot send the headers threads need), no
 # eval, memory that grows up to 2 GB so a large photo is an error message and not a
 # dead tab.
-EXPORTS := _cm_web_open,_cm_web_wake,_cm_web_strerror,_cm_web_modified,_cm_web_set_palette,_cm_web_set_format,_cm_web_view,_malloc,_free
+EXPORTS := _cm_web_open,_cm_web_wake,_cm_web_strerror,_cm_web_modified,_cm_web_set_palette,_cm_web_set_format,_cm_web_view,_cm_web_copy,_cm_web_status,_malloc,_free
 
 web: $(B)/web/cropmark.js $(PAGE:web/%=$(B)/web/%) $(B)/web/font/DejaVuSans.ttf $(B)/web/THIRD_PARTY.txt $(B)/web/config.js
 

@@ -148,6 +148,27 @@ body.dragging .start, body.dragging .stage { outline: 2px solid var(--accent); o
 .keys dt { font-weight: 600; white-space: nowrap; }
 .keys dd { margin: 0; color: var(--muted); }
 
+/* ---- the right-click menu on the picture; app.js places it at the pointer ---- */
+.menu {
+  position: fixed;
+  z-index: 10;
+  min-width: 12rem;
+  padding: 4px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.menu button {
+  display: flex;
+  width: 100%;
+  gap: 24px;
+  justify-content: space-between;
+  border-color: transparent;
+  text-align: left;
+}
+.menu button:hover, .menu button:focus-visible { background: var(--accent); color: var(--accent-text); border-color: var(--accent); outline: none; }
+.menu kbd { font: inherit; color: inherit; opacity: 0.75; }
+
 @media (max-width: 700px) {
   .privacy { display: none; }
 }
