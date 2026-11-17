@@ -90,8 +90,14 @@ on pushes to `main` deploys `build/web/` to GitHub Pages. One manual step is nee
 once: in the repository, **Settings → Pages → Source: GitHub Actions**.
 
 Every address in the site is relative, so it works unchanged under any repository name
-or at the root of a domain. The "Source" link on the page is the repository's address,
-which the workflow passes to the build; it is not written in the source.
+or at the root of a domain. The page names no address of its own: the two footer links
+come from the build (`make web REPO_URL=... AUTHOR_URL=...`), and a link without an
+address is hidden. The workflow passes:
+
+| Link | Address | To change it |
+|---|---|---|
+| Source | this repository on GitHub | follows the repository |
+| William Mahaney | the Code page of the owner's site, `https://<owner>.github.io/code/` | set a repository variable `AUTHOR_URL`: Settings → Secrets and variables → Actions → Variables |
 
 ### The submodule
 
@@ -107,17 +113,71 @@ If the desktop repository is renamed, update the address once:
 
 ## Custom domain
 
-The site can be served from a free subdomain, `cropmark-ai.is-a.dev`. is-a.dev is a
-volunteer-run service: a name is registered by a pull request to
-[github.com/is-a-dev/register](https://github.com/is-a-dev/register). Nothing in this
-repository is configured for it, and there is no `CNAME` file. The steps, in order:
+The site is published at the repository's `github.io` address. A custom domain is
+optional and is set in **Settings → Pages**, not with a file: when Pages is published
+by a GitHub Actions workflow, GitHub ignores a `CNAME` file, so this repository has
+none. Nothing in the repository needs to change for any of the options below.
 
-1. **Verify the domain in your GitHub account first.** GitHub → your profile picture →
-   Settings → Pages → **Add a domain** → enter `cropmark-ai.is-a.dev`. GitHub shows a
-   TXT record: a host name beginning `_github-pages-challenge-wmahaney` and a value.
-   Leave that page open. Verification is what stops someone else from pointing the name
-   at their own Pages site (a takeover) if this site is ever taken down.
-2. **Claim the name.** Fork `is-a-dev/register` and add `domains/cropmark-ai.json`:
+Custom domains work on every GitHub plan for a public repository; what GitHub Pro adds
+is Pages for private repositories. GitHub does not supply the domain itself. It comes
+from a registrar, from the GitHub Student Developer Pack (which includes a year of a
+`.me` domain from Namecheap, among other registrar offers), or from a free subdomain
+service such as is-a.dev.
+
+There are three ways to use one. Pick one.
+
+### A. A domain for the whole site; this tool follows
+
+Give the user site, `wmahaney.github.io`, a custom domain, say `example.me`. Every
+project site of the account that has no domain of its own then moves under it: this
+one becomes `https://example.me/cropmark-ai/`, and its `github.io` address redirects
+there. This is set up entirely in the website's repository, with GitHub's guide for an
+apex or `www` domain.
+
+Two things to do here afterwards, both optional:
+
+- Set the repository variable `AUTHOR_URL` to `https://example.me/code/`, so the
+  footer link names the new address. The old one keeps working through the redirect.
+- Nothing for storage: the tool still shares a browser origin with the rest of the
+  site, which is why its one stored key is prefixed, `cropmark:theme`.
+
+### B. A subdomain of your own domain, for this tool alone
+
+For example `cropmark.example.me`. The order matters: GitHub warns that pointing DNS at
+Pages before the name is claimed lets another account take it.
+
+1. **Verify the domain in your account.** Profile picture → Settings → Pages →
+   **Add a domain** → `example.me`. GitHub shows a TXT record, with host
+   `_github-pages-challenge-wmahaney.example.me` and a value. Add it at your DNS
+   provider, wait for it (minutes, at most a day), and press **Verify**. Keep the record
+   for good. Verifying a domain also protects its immediate subdomains.
+2. **Claim the name for this repository.** This repository → Settings → Pages →
+   Custom domain → `cropmark.example.me` → Save. The DNS check fails until step 3 is
+   done; that is expected.
+3. **Point the name at Pages.** At your DNS provider, add a `CNAME` record for
+   `cropmark` with the value `wmahaney.github.io`. The value is the account's address,
+   not the repository's. Do not use a wildcard record (`*.example.me`).
+4. **Check it:** `dig cropmark.example.me +noall +answer` shows the CNAME.
+5. **Enforce HTTPS** on the same settings page when it is offered, which can take up to
+   a day.
+
+The tool then has its own browser origin, separate from the rest of the site.
+
+### C. A free subdomain from is-a.dev
+
+is-a.dev is a volunteer-run service that hands out names such as
+`cropmark-ai.is-a.dev`. A name is registered by a pull request to
+[github.com/is-a-dev/register](https://github.com/is-a-dev/register). Their guide,
+<https://docs.is-a.dev/guides/github-pages/>, has the current file format; follow it
+if it differs from this.
+
+1. **Start the verification in your account.** Profile picture → Settings → Pages →
+   **Add a domain** → `cropmark-ai.is-a.dev`. GitHub shows a TXT record, with host
+   `_github-pages-challenge-wmahaney.cropmark-ai.is-a.dev` and a value. Leave the page
+   open.
+2. **Claim the name for this repository:** Settings → Pages → Custom domain →
+   `cropmark-ai.is-a.dev` → Save. The DNS check fails until the pull request is merged.
+3. **Request the name.** Fork `is-a-dev/register` and add `domains/cropmark-ai.json`:
 
    ```json
    {
@@ -126,25 +186,21 @@ repository is configured for it, and there is no `CNAME` file. The steps, in ord
    }
    ```
 
-3. **Add the TXT record** in the same pull request. is-a.dev does not allow a TXT record
-   in the same file as a CNAME, so it goes in a second file named after the host GitHub
-   showed you, `domains/_github-pages-challenge-wmahaney.cropmark-ai.json`, with
-   `"records": { "TXT": "<the value from GitHub>" }` and the same `owner`. Their guide,
-   <https://docs.is-a.dev/guides/github-pages/>, has the current file format; follow it
-   if it differs from this.
+   is-a.dev does not allow a TXT record in the same file as a CNAME, so the TXT record
+   goes in a second file named after its host,
+   `domains/_github-pages-challenge-wmahaney.cropmark-ai.json`, with the same `owner`
+   and `"records": { "TXT": "<the value from GitHub>" }`.
 4. Open the pull request and wait for it to be merged.
-5. Back on the GitHub page from step 1, press **Verify**.
-6. **Set the domain on this repository:** Settings → Pages → Custom domain →
-   `cropmark-ai.is-a.dev` → Save. Do this only after the pull request is merged.
-7. When the certificate is ready (minutes to an hour), tick **Enforce HTTPS** on the
-   same page.
+5. Back on the page from step 1, press **Verify**.
+6. **Enforce HTTPS** in this repository's Pages settings when it is offered.
 
-While the custom domain is set, GitHub redirects the `github.io` address of this site
-to it. If the domain is removed from the Pages settings, the site is served from the
-`github.io` address again, so that address stays the fallback.
+### Whichever you choose
 
-Moving to its own domain also gives the site its own browser storage, separate from
-the other sites under `wmahaney.github.io`.
+- The `github.io` address stays the fallback: remove the custom domain in Settings →
+  Pages and the site is served there again.
+- If this site is ever taken down while a DNS record still points at GitHub, someone
+  else could serve a page under that name. Verification (step 1 of B and C) prevents
+  that; if the domain is not verified, delete the DNS record first.
 
 ## Layout
 

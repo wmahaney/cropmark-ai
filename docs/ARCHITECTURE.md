@@ -174,9 +174,17 @@ so shortcuts apply while the editor has the focus. The page cancels the browser'
 action for `Ctrl+S`, `Ctrl+O`, `Ctrl+Z` and `Ctrl+Y` there, so `Ctrl+S` downloads the
 picture instead of saving the web page.
 
-Storage: one key, `cropmark:theme`. Until the site has its own domain it shares one
-storage origin with everything under `wmahaney.github.io`, hence the prefix. No image
-data is ever stored.
+Storage: one key, `cropmark:theme`. Served under the owner's site (its `github.io`
+address, or a domain set on that site) the tool shares one storage origin with every
+other page there, hence the prefix. On a domain of its own it has its own origin. No
+image data is ever stored.
+
+Addresses: the page's own files (`index.html`, `style.css`, `theme.js`, `app.js`) name
+none. The two footer links, "Source" and the author's name, take theirs from
+`config.js`, which the build writes from `REPO_URL` and `AUTHOR_URL`. `app.js` uses only
+`http` and `https` addresses and hides a link without one; the Makefile refuses an
+address with `"`, `\` or `<`, which could end the string in `config.js`. The browser
+check tests both rules.
 
 ## 9. Look
 
@@ -209,7 +217,7 @@ the editor has.
 | Test | What it covers |
 |---|---|
 | `make test` | The core's own `tests/test_core.c` (140 checks; the two hard-link checks do not apply), its command-line smoke test and its golden images, compiled to WebAssembly and run under Node. A miscompile that only the web build has would show here. |
-| `tests/browser/check.mjs` | The built site in headless Chrome: nothing but the page is fetched until a photo is opened; a 40-megapixel image is refused; a sideways JPEG opens upright; a crop and a marker stroke made with the mouse, saved with `Ctrl+S`, give a PNG identical to the command-line tool's for the same edit and to `tests/golden/crop-stroke.png`; the JPEG choice likewise; every tool and outlined text; undo and redo across the crop; drop and paste; the theme; zero frames while idle; no request to another origin; no policy violation. |
+| `tests/browser/check.mjs` | The built site in headless Chrome: nothing but the page is fetched until a photo is opened; a 40-megapixel image is refused; a sideways JPEG opens upright; a crop and a marker stroke made with the mouse, saved with `Ctrl+S`, give a PNG identical to the command-line tool's for the same edit and to `tests/golden/crop-stroke.png`; the JPEG choice likewise; every tool and outlined text; undo and redo across the crop; drop and paste; the theme; zero frames while idle; no request to another origin; no policy violation; the page's own files name no address, and the footer links are exactly the build's addresses, hidden when it has none. |
 | In the desktop repository | `make test`, `make asan`, `make fuzz-smoke` on the `web-support` branch. |
 
 The test programs are linked with one file the site does not have,
@@ -223,7 +231,9 @@ reading it (section 5, `web/app.js`).
 ## 11. Build and deploy
 
 One Makefile: `make web`, `make test`, `make browser-test`, `make serve`. The workflow
-checks out the submodule, installs a pinned Emscripten, runs the tests, builds, checks
+passes the footer addresses to `make web`: the repository's, and the owner's Code page
+(`https://<owner>.github.io/code/`) unless the repository variable `AUTHOR_URL` gives
+another. It checks out the submodule, installs a pinned Emscripten, runs the tests, builds, checks
 the size, runs the browser check, and on `main` deploys. Every action is pinned to a
 commit; the workflow has `contents: read`, and only the deploy job has `pages: write`
 and `id-token: write`.
