@@ -5,6 +5,16 @@ promise: any release may change the page and what it remembers in the browser.
 
 ## Unreleased
 
+- **Copy:** `Ctrl+C` in the editor, or **Copy picture** in the menu that right-clicking
+  the picture now opens, puts the picture on the clipboard as a PNG, with every
+  committed edit (not one still in progress). It is not a save: the edits stay unsaved
+  and the page still warns before closing. Always PNG, whatever **Save as** says. The
+  editor's status bar says when the copy is done; a browser without the Clipboard API
+  gets a message instead.
+- `core/` points at the desktop repository's `web-copy` branch, which adds
+  `cm_web_copy` and `cm_web_status`.
+- The browser check covers copying: Ctrl+C, the menu, Esc, that a copy is not a save,
+  and that the copied PNG equals the saved one (40 checks).
 - The author link in the footer no longer has an address written into the page. Like
   the "Source" link, it comes from the build (`AUTHOR_URL`); the workflow points it at
   the owner's Code page, and a repository variable `AUTHOR_URL` can replace that. A

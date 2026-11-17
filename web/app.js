@@ -6,6 +6,7 @@
 //   - gets a photo (file chooser, drag and drop, paste) and hands its bytes to the
 //     editor through Emscripten's in-memory file system;
 //   - turns a save into a download;
+//   - copies the picture to the clipboard (Ctrl+C, or right-click and Copy picture);
 //   - passes the page's colours to the editor's toolbar;
 //   - wakes the editor's loop on input, so it does no work while nothing happens.
 //
@@ -144,6 +145,54 @@
     URL.revokeObjectURL(url);
   }
 
+  // ---- copying: the picture as a PNG, on the clipboard ------------------------------
+  // The editor writes the picture as it is now (committed edits; nothing in progress)
+  // to a file; the page puts the file's bytes on the clipboard. A copy is not a save:
+  // the edits stay unsaved. Always PNG, whatever Save as says: PNG is the image type
+  // browsers can put on the clipboard.
+  const COPY_PATH = "/work/.clipboard.png";
+  function copyPicture() {
+    closeMenu(true);
+    if (!editor || !hasPhoto) return;
+    if (!navigator.clipboard || !navigator.clipboard.write || typeof ClipboardItem !== "function") {
+      say("This browser does not let the page copy pictures. Use Save to download the picture instead.");
+      return;
+    }
+    const rc = editor.ccall("cm_web_copy", "number", ["string"], [COPY_PATH]);
+    if (rc !== 0) {
+      say("Could not copy the picture: " + editor.UTF8ToString(editor._cm_web_strerror(rc)) + ".");
+      return;
+    }
+    editor.FS.chmod(COPY_PATH, 0o600);  // see saved(): the core's file mode, under Emscripten
+    const data = editor.FS.readFile(COPY_PATH);
+    editor.FS.unlink(COPY_PATH);
+    const w = editor._cm_web_view(4), h = editor._cm_web_view(5);
+    // Called at once, inside the key press or click: browsers allow a page to write to
+    // the clipboard only then.
+    navigator.clipboard.write([new ClipboardItem({ "image/png": new Blob([data], { type: "image/png" }) })])
+      .then(() => {
+        say("");
+        editor.ccall("cm_web_status", null, ["string"], [`Copied the picture (${w}x${h}) to the clipboard`]);
+      })
+      .catch((e) => say("Could not copy the picture: " + (e && e.message ? e.message : "the browser refused") + "."));
+  }
+
+  // The right-click menu on the picture. Its one item copies.
+  const menu = $("menu");
+  function openMenu(x, y) {
+    menu.hidden = false;
+    // Inside the window, with the corner at the pointer where it fits.
+    const r = menu.getBoundingClientRect();
+    menu.style.left = Math.max(0, Math.min(x, window.innerWidth - r.width)) + "px";
+    menu.style.top = Math.max(0, Math.min(y, window.innerHeight - r.height)) + "px";
+    $("menu-copy").focus();
+  }
+  function closeMenu(refocus = false) {
+    if (menu.hidden) return;
+    menu.hidden = true;
+    if (refocus) canvas.focus();
+  }
+
   function sendFormat() {
     if (editor && hasPhoto) editor._cm_web_set_format($("format").value === "jpeg" ? 1 : 0);
   }
@@ -238,9 +287,27 @@
   // saves the picture, not the web page.
   canvas.addEventListener("keydown", (ev) => {
     if ((ev.ctrlKey || ev.metaKey) && ["s", "o", "z", "y"].includes(ev.key.toLowerCase())) ev.preventDefault();
+    // Ctrl+C copies the picture (the editor itself does nothing with it).
+    if ((ev.ctrlKey || ev.metaKey) && !ev.shiftKey && !ev.altKey && ev.key.toLowerCase() === "c") {
+      ev.preventDefault();
+      copyPicture();
+    }
   });
   canvas.addEventListener("mousedown", () => canvas.focus());
-  canvas.addEventListener("contextmenu", (ev) => ev.preventDefault());
+  canvas.addEventListener("contextmenu", (ev) => {
+    ev.preventDefault();
+    if (hasPhoto) openMenu(ev.clientX, ev.clientY);
+  });
+  $("menu-copy").addEventListener("click", copyPicture);
+  menu.addEventListener("contextmenu", (ev) => ev.preventDefault());
+  menu.addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape" || ev.key === "Tab") { ev.preventDefault(); closeMenu(true); }
+  });
+  // Any press outside the menu, a scroll, a resize or leaving the tab closes it.
+  window.addEventListener("mousedown", (ev) => { if (!menu.contains(ev.target)) closeMenu(); }, true);
+  window.addEventListener("wheel", () => closeMenu(), { capture: true, passive: true });
+  window.addEventListener("resize", () => closeMenu());
+  window.addEventListener("blur", () => closeMenu());
 
   window.addEventListener("beforeunload", (ev) => {
     if (editor && editor._cm_web_modified()) { ev.preventDefault(); ev.returnValue = ""; }

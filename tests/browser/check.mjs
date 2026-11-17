@@ -91,6 +91,16 @@ try {
       set(fn) { factory = (opts) => fn(opts).then((m) => (window.__ed = m)); },
     });
     document.addEventListener("securitypolicyviolation", (e) => window.__csp.push(e.violatedDirective + " " + e.blockedURI));
+    // Keep what the page puts on the clipboard, instead of the system's clipboard.
+    window.__clips = [];
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: {
+      write: async (items) => {
+        for (const item of items) for (const type of item.types) {
+          const blob = await item.getType(type);
+          window.__clips.push({ type, bytes: Array.from(new Uint8Array(await blob.arrayBuffer())) });
+        }
+      },
+    } });
     // Keep each download instead of writing it to disk.
     const make = URL.createObjectURL.bind(URL);
     URL.createObjectURL = (blob) => { window.__lastBlob = blob; return make(blob); };
@@ -178,6 +188,33 @@ try {
   await drag(s0, s1);
   check(await page.evaluate(() => window.__ed._cm_web_modified()) === 1, "the editor reports unsaved edits");
 
+  // ---- Ctrl+C, and Copy picture in the right-click menu, copy the picture ----
+  const lastClip = async (n) => {
+    await page.waitForFunction((n) => window.__clips.length >= n, { timeout: 20000 }, n);
+    return page.evaluate((n) => window.__clips[n - 1], n);
+  };
+  const menuState = () => page.evaluate(() => ({ open: !document.querySelector("#menu").hidden, focus: document.activeElement && document.activeElement.id }));
+  await page.keyboard.down("Control"); await page.keyboard.press("c"); await page.keyboard.up("Control");
+  const clip = await lastClip(1);
+  check(clip.type === "image/png" && clip.bytes[0] === 0x89 && clip.bytes[1] === 0x50, "Ctrl+C puts a PNG on the clipboard");
+  check(await page.evaluate(() => window.__ed._cm_web_modified()) === 1, "a copy is not a save: the edits are still unsaved");
+  check(await page.evaluate(() => window.__ed.FS.readdir("/work").filter((n) => n !== "." && n !== "..").length) === 0, "no file is left in the editor's memory after the copy");
+  check((await menuState()).open === false, "the right-click menu is closed until the picture is right-clicked");
+  const mid = await at(150, 100);
+  await page.mouse.click(mid.px, mid.py, { button: "right" }); await sleep(150);
+  let ms = await menuState();
+  check(ms.open && ms.focus === "menu-copy", "right-clicking the picture opens a menu with Copy picture, focused");
+  await page.click("#menu-copy");
+  const clip2 = await lastClip(2);
+  ms = await menuState();
+  check(!ms.open && ms.focus === "canvas" && Buffer.from(clip2.bytes).equals(Buffer.from(clip.bytes)),
+    "Copy picture copies the same PNG, closes the menu and gives the editor the keyboard back");
+  await page.mouse.click(mid.px, mid.py, { button: "right" }); await sleep(150);
+  await key("Escape");
+  ms = await menuState();
+  check(!ms.open && ms.focus === "canvas", "Esc closes the menu without copying" + ((await page.evaluate(() => window.__clips.length)) === 2 ? "" : ": it copied"));
+  check((await view())[4] === crop.w && await page.evaluate(() => window.__ed._cm_web_modified()) === 1, "copying leaves the picture as it was");
+
   // ---- Ctrl+S downloads a PNG; it equals the same edit made by the command line ----
   await page.keyboard.down("Control"); await page.keyboard.press("s"); await page.keyboard.up("Control");
   const png = await lastDownload(1);
@@ -192,6 +229,9 @@ try {
   if (process.env.UPDATE_GOLDEN) await writeFile(GOLDEN, Buffer.from(png.bytes));
   d = same(webPng, GOLDEN, 0);
   check(d.status === 0, "the PNG matches the stored golden image" + (d.status ? ": " + (d.stderr || "").trim() : ""));
+  await writeFile(path.join(tmp, "clip.png"), Buffer.from(clip.bytes));
+  d = same(path.join(tmp, "clip.png"), webPng, 0);
+  check(d.status === 0, "the copied picture is the saved one, pixel for pixel" + (d.status ? ": " + (d.stderr || "").trim() : ""));
   check(await page.evaluate(() => window.__ed._cm_web_modified()) === 0, "saved: no unsaved edits");
   check(await page.evaluate(() => window.__ed.FS.readdir("/work").filter((n) => n[0] !== ".").length) === 0, "no file is left in the editor's memory after the download");
 

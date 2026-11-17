@@ -86,6 +86,8 @@ before this repository's workflow can check it out:
 | page → editor | `cm_web_set_format(0 or 1)` | the **Save as** choice (PNG or JPEG) |
 | page → editor | `cm_web_set_palette(...)` | at start and when the theme changes |
 | page → editor | `cm_web_wake()` | any input on the canvas, a resize |
+| page → editor | `cm_web_copy(path)` | `Ctrl+C` on the canvas, or **Copy picture** in the right-click menu: the editor writes the picture as a PNG to `path`; the page puts it on the clipboard and deletes the file |
+| page → editor | `cm_web_status(msg)` | the clipboard took the picture: a message in the editor's status bar |
 | page → editor | `cm_web_modified()` | before the tab closes, and before another photo replaces this one |
 | editor → page | `Module.cmOpenRequested()` | Open in the toolbar, `Ctrl+O` |
 | editor → page | `Module.cmSaved(path)` | a save succeeded: the page reads the file, starts a download, deletes the file |
@@ -99,6 +101,15 @@ document, which frees its pixels and its undo history.
 **Saving.** The editor writes the output as it does on the desktop (a temporary file,
 then a rename), and the page turns the file into a download. The default name is the
 photo's name with `-marked.png`.
+
+**Copying.** The editor writes the committed picture as a PNG, through the same
+`pm_doc_export` as a save, to `/work/.clipboard.png`; the page reads it, deletes it and
+calls `navigator.clipboard.write` with a `ClipboardItem` of type `image/png`, inside the
+key press or click, which is when browsers allow it. A copy does not touch `modified`,
+so it is not a save. PNG is the one image type browsers put on the clipboard, so a copy
+is PNG whatever **Save as** says. The right-click menu is a page element over the
+canvas; the browser's own menu stays off, since its "Copy image" would copy the canvas,
+toolbar included. The policy needs no change: the clipboard is not a connection.
 
 **The font.** A browser has no system fonts a C program can read. The page fetches
 `font/DejaVuSans.ttf` (the desktop default), writes it to `/font/` in the in-memory file
@@ -171,7 +182,7 @@ base-uri 'none'; form-action 'none'
 
 The keyboard: SDL listens on the canvas only (`SDL_HINT_EMSCRIPTEN_KEYBOARD_ELEMENT`),
 so shortcuts apply while the editor has the focus. The page cancels the browser's own
-action for `Ctrl+S`, `Ctrl+O`, `Ctrl+Z` and `Ctrl+Y` there, so `Ctrl+S` downloads the
+action for `Ctrl+S`, `Ctrl+O`, `Ctrl+Z`, `Ctrl+Y` and `Ctrl+C` there, so `Ctrl+S` downloads the
 picture instead of saving the web page.
 
 Storage: one key, `cropmark:theme`. Served under the owner's site (its `github.io`
@@ -217,7 +228,7 @@ the editor has.
 | Test | What it covers |
 |---|---|
 | `make test` | The core's own `tests/test_core.c` (140 checks; the two hard-link checks do not apply), its command-line smoke test and its golden images, compiled to WebAssembly and run under Node. A miscompile that only the web build has would show here. |
-| `tests/browser/check.mjs` | The built site in headless Chrome: nothing but the page is fetched until a photo is opened; a 40-megapixel image is refused; a sideways JPEG opens upright; a crop and a marker stroke made with the mouse, saved with `Ctrl+S`, give a PNG identical to the command-line tool's for the same edit and to `tests/golden/crop-stroke.png`; the JPEG choice likewise; every tool and outlined text; undo and redo across the crop; drop and paste; the theme; zero frames while idle; no request to another origin; no policy violation; the page's own files name no address, and the footer links are exactly the build's addresses, hidden when it has none. |
+| `tests/browser/check.mjs` | The built site in headless Chrome: nothing but the page is fetched until a photo is opened; a 40-megapixel image is refused; a sideways JPEG opens upright; a crop and a marker stroke made with the mouse, saved with `Ctrl+S`, give a PNG identical to the command-line tool's for the same edit and to `tests/golden/crop-stroke.png`; the JPEG choice likewise; every tool and outlined text; undo and redo across the crop; drop and paste; copying with `Ctrl+C` and the right-click menu (a PNG equal to the saved one, and not a save); the theme; zero frames while idle; no request to another origin; no policy violation; the page's own files name no address, and the footer links are exactly the build's addresses, hidden when it has none. |
 | In the desktop repository | `make test`, `make asan`, `make fuzz-smoke` on the `web-support` branch. |
 
 The test programs are linked with one file the site does not have,

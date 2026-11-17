@@ -60,6 +60,7 @@
       <dt>Shift+Enter</dt><dd>New line in text</dd>
       <dt>Esc</dt><dd>Cancel what is in progress</dd>
       <dt>Ctrl+Z, Ctrl+Y</dt><dd>Undo, redo</dd>
+      <dt>Ctrl+C</dt><dd>Copy the picture, to paste elsewhere (also: right-click it)</dd>
       <dt>Ctrl+S</dt><dd>Save: download the result</dd>
       <dt>Ctrl+Shift+S</dt><dd>Save under another name</dd>
       <dt>Ctrl+O</dt><dd>Open another photo</dd>
@@ -69,6 +70,11 @@
     </dl>
   </aside>
 </main>
+
+<!-- The right-click menu on the picture (app.js). -->
+<div id="menu" class="menu" role="menu" hidden>
+  <button type="button" id="menu-copy" role="menuitem">Copy picture <kbd>Ctrl+C</kbd></button>
+</div>
 
 <footer class="status">
   <span>JPEG and PNG, up to 32 megapixels. GPS and other EXIF data are removed on save.</span>

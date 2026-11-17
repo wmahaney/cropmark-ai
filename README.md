@@ -21,6 +21,10 @@ This tool was built with Claude; the `-ai` suffix in the repository's name marks
 - **Save** with the Save button or `Ctrl+S`: the result is downloaded as
   `NAME-marked.png`, or `.jpg` if you pick JPEG in **Save as** on the page. **Save as**
   in the editor's toolbar (`Ctrl+Shift+S`) asks for another name.
+- **Copy** with `Ctrl+C`, or right-click the picture and pick **Copy picture**: the
+  picture, with every edit so far, goes to the clipboard as a PNG, ready to paste into
+  a chat, a document or another program. A copy is not a save: the edits still count
+  as unsaved.
 - **Light and dark**, following the system setting; the button overrides it and is
   remembered.
 
@@ -47,6 +51,7 @@ Click the photo first, so the editor has the keyboard.
 | `Enter` | Apply the crop; finish the text (`Shift+Enter`: new line) |
 | `Esc` | Cancel what is in progress |
 | `Ctrl+Z`, `Ctrl+Y` | Undo, redo |
+| `Ctrl+C`, or right-click | Copy the picture to the clipboard |
 | `Ctrl+S`, `Ctrl+Shift+S` | Save (download); save under another name |
 | `Ctrl+O` | Open another photo |
 | Mouse wheel | Zoom around the pointer |
