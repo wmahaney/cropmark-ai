@@ -87,12 +87,19 @@ EMTEST := $(EMBASE) -sNODERAWFS=1 -sALLOW_MEMORY_GROWTH=1 -sEXIT_RUNTIME=1 -sWAS
 # help (docs/ARCHITECTURE.md, "Building with a distribution's Emscripten").
 EMTEST_EXTRA ?=
 
-$(B)/test/test_core.js: $(CORE)/tests/test_core.c $(CORE_OBJ) | $(B)/test
-	$(EMCC) $(EMTEST) -I$(CORE)/src $< $(CORE_OBJ) -o $@
-$(B)/test/imgdiff.js: $(CORE)/tests/imgdiff.c $(CORE_OBJ) | $(B)/test
-	$(EMCC) $(EMTEST) $< $(CORE_OBJ) $(EMTEST_EXTRA) -o $@
-$(B)/test/cropmark.js: $(CORE)/cli/main.c $(CORE)/cli/batch.c $(CORE_OBJ) | $(B)/test
-	$(EMCC) $(EMTEST) -DCM_NO_GUI -I$(CORE)/cli $(CORE)/cli/main.c $(CORE)/cli/batch.c $(CORE_OBJ) $(EMTEST_EXTRA) -o $@
+# Emscripten starts a program with a umask of 0777, so every file the core writes
+# would get mode 000, and only root could read it back. This gives the test programs
+# the umask of the Node process instead (tests/node_umask.c). gnu11 for its EM_ASM.
+$(B)/obj/node_umask.o: tests/node_umask.c | $(B)/obj
+	$(EMCC) -O2 -std=gnu11 -Wall -Wextra -c $< -o $@
+TEST_OBJ := $(CORE_OBJ) $(B)/obj/node_umask.o
+
+$(B)/test/test_core.js: $(CORE)/tests/test_core.c $(TEST_OBJ) | $(B)/test
+	$(EMCC) $(EMTEST) -I$(CORE)/src $< $(TEST_OBJ) -o $@
+$(B)/test/imgdiff.js: $(CORE)/tests/imgdiff.c $(TEST_OBJ) | $(B)/test
+	$(EMCC) $(EMTEST) $< $(TEST_OBJ) $(EMTEST_EXTRA) -o $@
+$(B)/test/cropmark.js: $(CORE)/cli/main.c $(CORE)/cli/batch.c $(TEST_OBJ) | $(B)/test
+	$(EMCC) $(EMTEST) -DCM_NO_GUI -I$(CORE)/cli $(CORE)/cli/main.c $(CORE)/cli/batch.c $(TEST_OBJ) $(EMTEST_EXTRA) -o $@
 
 # Small shell wrappers, so the core's test scripts can run the programs by path.
 $(B)/test/bin/%: $(B)/test/%.js

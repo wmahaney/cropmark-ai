@@ -212,6 +212,14 @@ the editor has.
 | `tests/browser/check.mjs` | The built site in headless Chrome: nothing but the page is fetched until a photo is opened; a 40-megapixel image is refused; a sideways JPEG opens upright; a crop and a marker stroke made with the mouse, saved with `Ctrl+S`, give a PNG identical to the command-line tool's for the same edit and to `tests/golden/crop-stroke.png`; the JPEG choice likewise; every tool and outlined text; undo and redo across the crop; drop and paste; the theme; zero frames while idle; no request to another origin; no policy violation. |
 | In the desktop repository | `make test`, `make asan`, `make fuzz-smoke` on the `web-support` branch. |
 
+The test programs are linked with one file the site does not have,
+`tests/node_umask.c`. Emscripten starts a program with a umask of 0777, a placeholder,
+and the core gives a file it writes the mode `0666 & ~umask`: mode 000. Under Node with
+real files, only root can read such a file back, so the tests passed for root and
+failed for anyone else. The file sets the umask of the Node process when a test program
+starts. The page does not need it: it sets the mode of a saved file itself before
+reading it (section 5, `web/app.js`).
+
 ## 11. Build and deploy
 
 One Makefile: `make web`, `make test`, `make browser-test`, `make serve`. The workflow
