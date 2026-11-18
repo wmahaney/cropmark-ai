@@ -87,6 +87,7 @@ before this repository's workflow can check it out:
 | page → editor | `cm_web_set_palette(...)` | at start and when the theme changes |
 | page → editor | `cm_web_wake()` | any input on the canvas, a resize |
 | page → editor | `cm_web_copy(path)` | `Ctrl+C` on the canvas, or **Copy picture** in the right-click menu: the editor writes the picture as a PNG to `path`; the page puts it on the clipboard and deletes the file |
+| page → editor | `cm_web_history(0 or 1)` | `Ctrl+Z` (0), or `Ctrl+Y` or `Ctrl+Shift+Z` (1), pressed while the focus is elsewhere on the page: undo or redo, as the keys do on the canvas |
 | page → editor | `cm_web_status(msg)` | the clipboard took the picture: a message in the editor's status bar |
 | page → editor | `cm_web_modified()` | before the tab closes, and before another photo replaces this one |
 | editor → page | `Module.cmOpenRequested()` | Open in the toolbar, `Ctrl+O` |
@@ -183,7 +184,10 @@ base-uri 'none'; form-action 'none'
 The keyboard: SDL listens on the canvas only (`SDL_HINT_EMSCRIPTEN_KEYBOARD_ELEMENT`),
 so shortcuts apply while the editor has the focus. The page cancels the browser's own
 action for `Ctrl+S`, `Ctrl+O`, `Ctrl+Z`, `Ctrl+Y` and `Ctrl+C` there, so `Ctrl+S` downloads the
-picture instead of saving the web page.
+picture instead of saving the web page. Undo and redo are the exception to "the canvas
+only": the page passes on `Ctrl+Z`, `Ctrl+Y` and `Ctrl+Shift+Z` pressed anywhere else on
+it through `cm_web_history`, except in a text field, which keeps its own undo (the page
+has none today).
 
 Storage: one key, `cropmark:theme`. Served under the owner's site (its `github.io`
 address, or a domain set on that site) the tool shares one storage origin with every
@@ -228,7 +232,7 @@ the editor has.
 | Test | What it covers |
 |---|---|
 | `make test` | The core's own `tests/test_core.c` (140 checks; the two hard-link checks do not apply), its command-line smoke test and its golden images, compiled to WebAssembly and run under Node. A miscompile that only the web build has would show here. |
-| `tests/browser/check.mjs` | The built site in headless Chrome: nothing but the page is fetched until a photo is opened; a 40-megapixel image is refused; a sideways JPEG opens upright; a crop and a marker stroke made with the mouse, saved with `Ctrl+S`, give a PNG identical to the command-line tool's for the same edit and to `tests/golden/crop-stroke.png`; the JPEG choice likewise; every tool and outlined text; undo and redo across the crop; drop and paste; copying with `Ctrl+C` and the right-click menu (a PNG equal to the saved one, and not a save); the theme; zero frames while idle; no request to another origin; no policy violation; the page's own files name no address, and the footer links are exactly the build's addresses, hidden when it has none. |
+| `tests/browser/check.mjs` | The built site in headless Chrome: nothing but the page is fetched until a photo is opened; a 40-megapixel image is refused; a sideways JPEG opens upright; a crop and a marker stroke made with the mouse, saved with `Ctrl+S`, give a PNG identical to the command-line tool's for the same edit and to `tests/golden/crop-stroke.png`; the JPEG choice likewise; every tool and outlined text; undo and redo across the crop, with the focus on the canvas, on a page button and on the page itself, and while typing text; drop and paste; copying with `Ctrl+C` and the right-click menu (a PNG equal to the saved one, and not a save); the theme; zero frames while idle; no request to another origin; no policy violation; the page's own files name no address, and the footer links are exactly the build's addresses, hidden when it has none. |
 | In the desktop repository | `make test`, `make asan`, `make fuzz-smoke` on the `web-support` branch. |
 
 The test programs are linked with one file the site does not have,

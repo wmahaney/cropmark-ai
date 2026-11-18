@@ -273,6 +273,50 @@ try {
   const again = await lastDownload(4);
   await writeFile(path.join(tmp, "again.png"), Buffer.from(again.bytes));
   check(same(path.join(tmp, "full.png"), path.join(tmp, "again.png"), 0).status === 0, "redo brings every edit back exactly");
+
+  // ---- Ctrl+Z and Ctrl+Y with the focus elsewhere on the page, and while typing ----
+  const ctrl = async (k, shift = false) => {
+    await page.keyboard.down("Control"); if (shift) await page.keyboard.down("Shift");
+    await page.keyboard.press(k);
+    if (shift) await page.keyboard.up("Shift");
+    await page.keyboard.up("Control"); await sleep(60);
+  };
+  const focused = () => page.evaluate(() => document.activeElement && (document.activeElement.id || document.activeElement.tagName));
+  await page.click("#btn-keys"); await sleep(100);         // the focus is on a page button
+  const onButton = await focused();
+  for (let i = 0; i < 3; i++) await ctrl("z");
+  await page.click("#btn-keys"); await sleep(100);
+  await page.mouse.click(5, 795); await sleep(100);       // ... then on the page itself
+  const onPage = await focused();
+  for (let i = 0; i < undoAll - 3; i++) await ctrl("z");
+  v = await view();
+  check(onButton === "btn-keys" && onPage === "BODY" && v[4] === 480 && v[5] === 320,
+    `Ctrl+Z undoes with the focus on a page button or the page (${onButton}, ${onPage}): ${v[4]}x${v[5]}`);
+  for (let i = 0; i < undoAll; i++) await ctrl(i % 2 ? "y" : "z", i % 2 === 0);  // Ctrl+Y and Ctrl+Shift+Z
+  await page.focus("#canvas"); await sleep(60);
+  await ctrl("s");
+  const fromPage = await lastDownload(5);
+  await writeFile(path.join(tmp, "from-page.png"), Buffer.from(fromPage.bytes));
+  check(same(path.join(tmp, "full.png"), path.join(tmp, "from-page.png"), 0).status === 0,
+    "Ctrl+Y and Ctrl+Shift+Z redo every edit with the focus on the page");
+  // While typing: Ctrl+Z finishes the text and takes it away, Ctrl+Y brings it back.
+  await key("t");
+  const t1 = await at(180, 150);
+  await page.mouse.click(t1.px, t1.py); await sleep(150);
+  await page.keyboard.type("gone", { delay: 20 });
+  await ctrl("z");
+  await ctrl("s");
+  const typedUndone = await lastDownload(6);
+  await writeFile(path.join(tmp, "typed-undone.png"), Buffer.from(typedUndone.bytes));
+  check(same(path.join(tmp, "full.png"), path.join(tmp, "typed-undone.png"), 0).status === 0,
+    "Ctrl+Z while typing takes the text away and keeps the edit before it");
+  await ctrl("y");
+  await ctrl("s");
+  const typedRedone = await lastDownload(7);
+  await writeFile(path.join(tmp, "typed-redone.png"), Buffer.from(typedRedone.bytes));
+  check(same(path.join(tmp, "full.png"), path.join(tmp, "typed-redone.png"), 0).status !== 0, "Ctrl+Y after that brings the text back");
+  await ctrl("z");
+  await key("m");
   await page.screenshot({ path: path.join(repo, "build/browser-edited.png") });
 
   // ---- theme ----
