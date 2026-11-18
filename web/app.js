@@ -7,6 +7,7 @@
 //     editor through Emscripten's in-memory file system;
 //   - turns a save into a download;
 //   - copies the picture to the clipboard (Ctrl+C, or right-click and Copy picture);
+//   - passes on Ctrl+Z and Ctrl+Y pressed while the canvas does not have the keyboard;
 //   - passes the page's colours to the editor's toolbar;
 //   - wakes the editor's loop on input, so it does no work while nothing happens.
 //
@@ -292,6 +293,18 @@
       ev.preventDefault();
       copyPicture();
     }
+  });
+  // Undo and redo work wherever the focus is on the page, not only on the picture: the
+  // editor hears keys on its canvas only, so Ctrl+Z, Ctrl+Y and Ctrl+Shift+Z pressed
+  // anywhere else are passed on to it. A text field would keep its own undo.
+  document.addEventListener("keydown", (ev) => {
+    if (!editor || !hasPhoto || ev.target === canvas || ev.altKey || !(ev.ctrlKey || ev.metaKey)) return;
+    const k = ev.key.toLowerCase();
+    if (k !== "z" && k !== "y") return;
+    const t = ev.target;
+    if (t && (t.isContentEditable || t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
+    ev.preventDefault();
+    editor._cm_web_history(k === "y" || ev.shiftKey ? 1 : 0);
   });
   canvas.addEventListener("mousedown", () => canvas.focus());
   canvas.addEventListener("contextmenu", (ev) => {

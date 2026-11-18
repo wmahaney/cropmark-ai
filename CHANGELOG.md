@@ -5,6 +5,16 @@ promise: any release may change the page and what it remembers in the browser.
 
 ## Unreleased
 
+- **Undo and redo from anywhere on the page.** `Ctrl+Z`, `Ctrl+Y` and `Ctrl+Shift+Z`
+  used to work only while the picture had the keyboard; after clicking a button on the
+  page, or the page itself, they did nothing. The page now passes them to the editor
+  (`cm_web_history`).
+- **Undo and redo while typing text.** They used to be ignored while typing. Now the
+  text is finished first, so undo takes it away and redo brings it back. The editor's
+  Undo button no longer throws the typed text away together with the edit before it.
+- `core/` points at the desktop repository's `web-undo` branch, which adds both.
+- The browser check covers undo and redo with the focus on a page button and on the
+  page, and while typing (44 checks).
 - **Copy:** `Ctrl+C` in the editor, or **Copy picture** in the menu that right-clicking
   the picture now opens, puts the picture on the clipboard as a PNG, with every
   committed edit (not one still in progress). It is not a save: the edits stay unsaved

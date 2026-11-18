@@ -40,7 +40,8 @@ This tool was built with Claude; the `-ai` suffix in the repository's name marks
 
 ## Shortcuts
 
-Click the photo first, so the editor has the keyboard.
+Click the photo first, so the editor has the keyboard. Undo and redo work from anywhere
+on the page.
 
 | Key | Action |
 |---|---|
@@ -50,7 +51,7 @@ Click the photo first, so the editor has the keyboard.
 | `O` | Outline for text |
 | `Enter` | Apply the crop; finish the text (`Shift+Enter`: new line) |
 | `Esc` | Cancel what is in progress |
-| `Ctrl+Z`, `Ctrl+Y` | Undo, redo |
+| `Ctrl+Z`, `Ctrl+Y` (or `Ctrl+Shift+Z`) | Undo, redo, from anywhere on the page; text still being typed is finished first, so undo takes it away |
 | `Ctrl+C`, or right-click | Copy the picture to the clipboard |
 | `Ctrl+S`, `Ctrl+Shift+S` | Save (download); save under another name |
 | `Ctrl+O` | Open another photo |
